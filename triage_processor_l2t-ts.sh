@@ -1,7 +1,8 @@
 #!/bin/bash
-# Automate timeline processing for an input triage zip file
+# Automate timeline processing for an input triage zip file. See comments below for the step-by-step process.
 #
 # Usage: triage_processor_l2t-ts.sh /path/to/triage.zip
+# Note: requires unzip, log2timeline.py, and timesketch_importer to be installed
 #
 # Created by Mike Pilkington for use in SANS FOR608
 # Inspired by https://github.com/ReconInfoSec/velociraptor-to-timesketch
@@ -30,7 +31,7 @@ process_files () {
     
     # Unzip triage data (fuse-zip is a time- & space-saving alternative, but unzip is more universally installed)
     echo [$(date --utc +'%Y-%m-%d %H:%M:%S') UTC] Unzipping $ZIPFULL to $PROCESSING_DIR/$TIMESTAMPED_NAME | tee -a $PROCESSING_DIR/$TIMESTAMPED_NAME.log
-    echo A | unzip -q $ZIPFULL -d $PROCESSING_DIR/$TIMESTAMPED_NAME
+    unzip -q $ZIPFULL -d $PROCESSING_DIR/$TIMESTAMPED_NAME
     
     # Run log2timeline and generate Plaso file
     echo [$(date --utc +'%Y-%m-%d %H:%M:%S') UTC] "Beginning Plaso creation of $PROCESSING_DIR/$TIMESTAMPED_NAME.plaso (this typically takes 20 minutes or more)..." | tee -a $PROCESSING_DIR/$TIMESTAMPED_NAME.log
