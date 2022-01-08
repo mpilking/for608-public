@@ -1,14 +1,19 @@
 #!/bin/bash
 # Automate timeline processing for an input triage zip file. See comments below for the step-by-step process.
-#
+# Version: 2022h01
 # Usage: triage_processor_l2t-ts.sh /path/to/triage.zip
-# Note: requires unzip, log2timeline.py, and timesketch_importer to be installed
+# Note: requires unzip, log2timeline in Docker (version 20210412), and timesketch_importer to be installed
 #
 # Created by Mike Pilkington for use in SANS FOR608
 # Inspired by https://github.com/ReconInfoSec/velociraptor-to-timesketch
+# Since creating this basic script, Janantha Marasinghe created a more robust version at:
+# https://github.com/blueteam0ps/AllthingsTimesketch/blob/master/l2t_ts_watcher.sh
 
 # Set the $PROCESSING_DIR as the location where zips will be processed and plaso files saved
 PROCESSING_DIR="/cases/processor"
+
+# Set lot2timeline parsers. Default is optomized for a Windows triage data set with MFT parsing.
+L2T_PARSERS="win7_slow,!filestat"
 
 # Get $TRIAGEZIP to process from positional argument 1. Add $EXTENSION check that it's a .zip file.
 TRIAGEZIP=$1
@@ -35,12 +40,15 @@ process_files () {
     
     # Run log2timeline and generate Plaso file
     echo [$(date --utc +'%Y-%m-%d %H:%M:%S') UTC] "Beginning Plaso creation of $PROCESSING_DIR/$TIMESTAMPED_NAME.plaso (this typically takes 20 minutes or more)..." | tee -a $PROCESSING_DIR/$TIMESTAMPED_NAME.log
-    log2timeline.py --status_view none --parsers 'win7_slow,!filestat' $PROCESSING_DIR/$TIMESTAMPED_NAME.plaso $PROCESSING_DIR/$TIMESTAMPED_NAME
+    #log2timeline.py --status_view none --parsers $L2T_PARSERS $PROCESSING_DIR/$TIMESTAMPED_NAME.plaso $PROCESSING_DIR/$TIMESTAMPED_NAME
+    docker run -v $PROCESSING_DIR:$PROCESSING_DIR log2timeline/plaso:20210412 log2timeline --parsers $L2T_PARSERS $PROCESSING_DIR/$TIMESTAMPED_NAME.plaso $PROCESSING_DIR/$TIMESTAMPED_NAME
     echo [$(date --utc +'%Y-%m-%d %H:%M:%S') UTC] "Plaso file creation finished" | tee -a $PROCESSING_DIR/$TIMESTAMPED_NAME.log
 
     # Run timesketch_importer to send Plaso data to Timesketch
     echo [$(date --utc +'%Y-%m-%d %H:%M:%S') UTC] "Beginning Timesketch import of $TIMESTAMPED_NAME-triage timeline (this typically takes an hour or more)..." | tee -a $PROCESSING_DIR/$TIMESTAMPED_NAME.log
-    timesketch_importer -u sansforensics -p forensics --host http://127.0.0.1 --index_name plaso-$TIMESTAMPED_NAME --timeline_name $TIMESTAMPED_NAME-triage --sketch_name $TIMESTAMPED_NAME-sketch $PROCESSING_DIR/$TIMESTAMPED_NAME.plaso
+    shred -u ~/.timesketch*
+    timesketch_importer -u sansforensics -p forensics --host http://127.0.0.1 --index_name l2t-$TIMESTAMPED_NAME --timeline_name $TIMESTAMPED_NAME-triage --sketch_name $TIMESTAMPED_NAME-sketch $PROCESSING_DIR/$TIMESTAMPED_NAME.plaso
+    shred -u ~/.timesketch*
     echo [$(date --utc +'%Y-%m-%d %H:%M:%S') UTC] "Timesketch import finished" | tee -a $PROCESSING_DIR/$TIMESTAMPED_NAME.log
     
     # Delete unzipped triage data directory, but leave the new plaso file in place (consider zipping it another step)
