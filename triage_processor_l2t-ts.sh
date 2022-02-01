@@ -9,7 +9,8 @@
 # Since creating this basic script, Janantha Marasinghe created a more robust version at:
 # https://github.com/blueteam0ps/AllthingsTimesketch/blob/master/l2t_ts_watcher.sh
 
-# Set the $PROCESSING_DIR as the location where zips will be processed and plaso files saved
+# Set the $PROCESSING_DIR as the location where zips will be processed and plaso files saved. 
+# Make sure this path is correct and exists.
 PROCESSING_DIR="/cases/processor"
 
 # Set lot2timeline parsers. Default is optomized for a Windows triage data set with MFT parsing.
@@ -40,8 +41,7 @@ process_files () {
     
     # Run log2timeline and generate Plaso file
     echo [$(date --utc +'%Y-%m-%d %H:%M:%S') UTC] "Beginning Plaso creation of $PROCESSING_DIR/$TIMESTAMPED_NAME.plaso (this typically takes 20 minutes or more)..." | tee -a $PROCESSING_DIR/$TIMESTAMPED_NAME.log
-    #log2timeline.py --status_view none --parsers $L2T_PARSERS $PROCESSING_DIR/$TIMESTAMPED_NAME.plaso $PROCESSING_DIR/$TIMESTAMPED_NAME
-    docker run -v $PROCESSING_DIR:$PROCESSING_DIR log2timeline/plaso:20210412 log2timeline --parsers $L2T_PARSERS $PROCESSING_DIR/$TIMESTAMPED_NAME.plaso $PROCESSING_DIR/$TIMESTAMPED_NAME
+    docker run --rm -v $PROCESSING_DIR:$PROCESSING_DIR log2timeline/plaso:20210412 log2timeline --status_view none --parsers $L2T_PARSERS $PROCESSING_DIR/$TIMESTAMPED_NAME.plaso $PROCESSING_DIR/$TIMESTAMPED_NAME
     echo [$(date --utc +'%Y-%m-%d %H:%M:%S') UTC] "Plaso file creation finished" | tee -a $PROCESSING_DIR/$TIMESTAMPED_NAME.log
 
     # Run timesketch_importer to send Plaso data to Timesketch
