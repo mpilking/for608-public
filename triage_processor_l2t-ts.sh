@@ -5,6 +5,7 @@
 # Note: requires unzip, log2timeline in Docker (version 20210412), and timesketch_importer to be installed
 #
 # Created by Mike Pilkington for use in SANS FOR608
+# Note that there are specific settings chosen for compatilbity reasons, such as the version of Plaso used.
 # Inspired by https://github.com/ReconInfoSec/velociraptor-to-timesketch
 # Since creating this basic script, Janantha Marasinghe created a more robust version at:
 # https://github.com/blueteam0ps/AllthingsTimesketch/blob/master/l2t_ts_watcher.sh
@@ -15,6 +16,11 @@ PROCESSING_DIR="/cases/processor"
 
 # Set lot2timeline parsers. Default is optomized for a Windows triage data set with MFT parsing.
 L2T_PARSERS="win7_slow,!filestat"
+
+# Set the timezone for parsing artifacts that store times in local time. (Most are UTC in Windows)
+# Example for US East coast: "EST5EDT". To get the list of available timezone codes, run:
+# docker run --rm log2timeline/plaso:20210412 log2timeline --timezone list
+TIMEZONE="UTC"
 
 # Get $TRIAGEZIP to process from positional argument 1. Add $EXTENSION check that it's a .zip file.
 TRIAGEZIP=$1
@@ -41,7 +47,7 @@ process_files () {
     
     # Run log2timeline and generate Plaso file
     echo [$(date --utc +'%Y-%m-%d %H:%M:%S') UTC] "Beginning Plaso creation of $PROCESSING_DIR/$TIMESTAMPED_NAME.plaso (this typically takes 20 minutes or more)..." | tee -a $PROCESSING_DIR/$TIMESTAMPED_NAME.log
-    docker run --rm -v $PROCESSING_DIR:$PROCESSING_DIR log2timeline/plaso:20210412 log2timeline --status_view none --parsers $L2T_PARSERS $PROCESSING_DIR/$TIMESTAMPED_NAME.plaso $PROCESSING_DIR/$TIMESTAMPED_NAME
+    docker run --rm -v $PROCESSING_DIR:$PROCESSING_DIR log2timeline/plaso:20210412 log2timeline --status_view none --timezone $TIMEZONE --parsers $L2T_PARSERS $PROCESSING_DIR/$TIMESTAMPED_NAME.plaso $PROCESSING_DIR/$TIMESTAMPED_NAME
     echo [$(date --utc +'%Y-%m-%d %H:%M:%S') UTC] "Plaso file creation finished" | tee -a $PROCESSING_DIR/$TIMESTAMPED_NAME.log
 
     # Run timesketch_importer to send Plaso data to Timesketch
