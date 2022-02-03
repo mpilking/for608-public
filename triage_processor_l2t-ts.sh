@@ -2,14 +2,14 @@
 # Automate timeline processing for an input triage zip file. See comments below for the step-by-step process.
 # Version: 2022h01
 # Usage: triage_processor_l2t-ts.sh /path/to/triage.zip
-# Note: requires unzip, log2timeline in Docker (version 20210412), and timesketch_importer to be installed
-#
-# Created by Mike Pilkington for use in SANS FOR608
-# Note that there are specific settings chosen for compatilbity reasons, such as the version of Plaso used.
+# Requires: unzip, log2timeline in Docker (version 20210412), and timesketch_importer to be installed
+# Note: Designed for use in SANS FOR608. As such, there are specific settings chosen for compatilbity reasons, such as the version of Plaso used.
+
 # Inspired by https://github.com/ReconInfoSec/velociraptor-to-timesketch
 # Since creating this basic script, Janantha Marasinghe created a more robust version at:
 # https://github.com/blueteam0ps/AllthingsTimesketch/blob/master/l2t_ts_watcher.sh
 
+### DEFINE VARIABLES: 
 # Set the $PROCESSING_DIR as the location where zips will be processed and plaso files saved. 
 # Make sure this path is correct and exists.
 PROCESSING_DIR="/cases/processor"
@@ -25,6 +25,7 @@ TIMEZONE="UTC"
 # Get $TRIAGEZIP to process from positional argument 1. Add $EXTENSION check that it's a .zip file.
 TRIAGEZIP=$1
 EXTENSION="${TRIAGEZIP##*.}"
+###
 
 process_files () {
     # Store full input parameter from user as $ZIPFULL
