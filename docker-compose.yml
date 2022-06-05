@@ -1,0 +1,93 @@
+# Thanks to Alan Orlikoski for his work on Skadi VM (https://github.com/orlikoski/Skadi).
+# Skadi was an inspiration for our version of a scalable DFIR analysis stack in the SIFT VM.
+
+version: '3.7'
+networks:
+  backend:
+    name: 608-backend
+
+services:
+  timesketch-web:
+    image: us-docker.pkg.dev/osdfir-registry/timesketch/timesketch@sha256:745c0e1aca2d207cdbb60845f22ce202d945db9746f97846a5797488e9b2df3a
+    environment:
+      - NUM_WSGI_WORKERS=${NUM_WSGI_WORKERS}
+    restart: always
+    networks:
+      - backend
+    command: timesketch-web
+    volumes:
+      - ./etc/timesketch:/etc/timesketch/
+      - ./upload:/usr/share/timesketch/upload/
+      - ./logs:/var/log/timesketch/
+
+  timesketch-worker:
+    image: us-docker.pkg.dev/osdfir-registry/timesketch/timesketch@sha256:745c0e1aca2d207cdbb60845f22ce202d945db9746f97846a5797488e9b2df3a
+    environment:
+      - WORKER_LOG_LEVEL=${WORKER_LOG_LEVEL}
+    restart: always
+    networks:
+      - backend
+    command: timesketch-worker
+    volumes:
+      - ./etc/timesketch:/etc/timesketch/
+      - ./upload:/usr/share/timesketch/upload/
+      - ./logs:/var/log/timesketch/
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:${ELASTIC_VERSION}
+    container_name: elasticsearch
+    environment:
+      - discovery.type=single-node
+      - bootstrap.memory_lock=true
+      - TAKE_FILE_OWNERSHIP=1
+      - ES_JAVA_OPTS=-Xms${ELASTIC_MEM_USE_GB}g -Xmx${ELASTIC_MEM_USE_GB}g
+    networks:
+      - backend
+    restart: always
+    ports:
+      - 9200:9200
+    volumes:
+      - ./data/elasticsearch:/usr/share/elasticsearch/data/
+
+  postgres:
+    image: postgres:${POSTGRES_VERSION}
+    environment:
+      - POSTGRES_USER=timesketch
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    networks:
+      - backend
+    restart: always
+    volumes:
+      - ./data/postgresql:/var/lib/postgresql/data
+
+  redis:
+    image: redis:${REDIS_VERSION}
+    networks:
+      - backend
+    command: "redis-server"
+    restart: always
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:${ELASTIC_VERSION}
+    container_name: kibana
+    networks:
+      - backend
+    environment:
+      ELASTICSEARCH_URL: http://elasticsearch:9200 
+      ELASTICSEARCH_HOSTS: http://elasticsearch:9200 
+    restart: always
+    expose:
+      - "5601"
+    ports:
+      - 5601:5601
+
+  nginx:
+    image: nginx:${NGINX_VERSION}
+    networks:
+      - backend
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./etc/nginx.conf:/etc/nginx/nginx.conf
