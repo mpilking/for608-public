@@ -25,18 +25,18 @@ fi
 
 TIMESTAMP=$(date --utc +'%Y%m%dt%H%M%S')
 
-echo "Updating /opt/timesketch/docker-compose.yml"
+echo "- Updating /opt/timesketch/docker-compose.yml"
 mv /opt/timesketch/docker-compose.yml /opt/timesketch/docker-compose_$TIMESTAMP.yml.bak
 wget -q https://github.com/mpilking/for608-public/raw/H01/docker-compose.yml -O /opt/timesketch/docker-compose.yml
 
-echo "Updating /opt/timesketch/etc/timesketch/timesketch.conf"
+echo "- Updating /opt/timesketch/etc/timesketch/timesketch.conf"
 mv /opt/timesketch/etc/timesketch/timesketch.conf /opt/timesketch/etc/timesketch/timesketch_$TIMESTAMP.conf.bak
 wget -q https://github.com/mpilking/for608-public/raw/H01/timesketch.conf -O /opt/timesketch/etc/timesketch/timesketch.conf
 
-echo "Adding required sigma blocklist file"
+echo "- Adding required sigma blocklist file"
 wget -q https://github.com/mpilking/for608-public/raw/H01/sigma_blocklist.csv -O /opt/timesketch/etc/timesketch/sigma_blocklist.csv
 
-echo "Adding ATT&CK tagger file"
+echo "- Adding ATT&CK tagger file"
 mv /opt/timesketch/etc/timesketch/tags.yaml /opt/timesketch/etc/timesketch/tags_$TIMESTAMP.yaml
 wget -q https://raw.githubusercontent.com/blueteam0ps/AllthingsTimesketch/master/tags.yaml -O /opt/timesketch/etc/timesketch/tags.yaml
 
