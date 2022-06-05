@@ -17,6 +17,12 @@ if [ ! -z "$(docker ps | grep timesketch)" ]; then
   exit 1
 fi
 
+# Exit early if there are OpenCTI containers already running.
+if [ ! -z "$(docker ps | grep opencti)" ]; then
+  echo "ERROR: OpenCTI containers are running. Shutdown the stack by changing directories to /opt/opencti/docker and running 'docker-compose down' before proceeding."
+  exit 1
+fi
+
 TIMESTAMP=$(date --utc +'%Y%m%dt%H%M%S')
 
 echo "Updating /opt/timesketch/docker-compose.yml"
